@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="de">
+    <head>
+        <title>QR Code - Inventur Generator</title>
+        <meta charset="utf-8">
+        <meta name="author" content="David Kovac">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <!-- CSS - Bootstrap -->
+        <link rel="stylesheet" href="css/bootstrap.min.css">
+        <!-- CSS - Fontawesome -->
+        <link rel="stylesheet" href="css/fontawesome.min.css">
+        <style>
+            .trash {
+                cursor:pointer;
+            }
+
+            .form-control-range {
+                padding:19px 19px 19px 19px;
+            }
+
+            .qrCode {
+                width:100%;
+                height:100%;
+                display:flex;
+                flex-direction:row;
+                margin-bottom:35px;
+            }
+
+            .qrCode:last-child {
+                margin-bottom:0px;
+            }
+
+            .qrCodeTxt {
+                width:100%;
+                display:flex;
+                margin-left:25px;
+                font-weight:bold;
+                align-items:center;
+            }
+
+            .card-header .fa {
+                cursor:pointer;
+                transition:.3s transform ease-in-out;
+            }
+
+            .card-header .collapsed .fa {
+                transform:rotate(90deg);
+            }
+        </style>
+    </head>
+    <body>
+        <div class="d-flex flex-column min-vh-100 justify-content-center align-items-center">
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-12 col-md-6 mt-3">
+                        <div class="card">
+                            <h5 class="card-header">QR Code - Inventur Generator</h5>
+                            <div class="card-body">
+                                <div id="buttonContainer">
+                                    <div class="input-group mb-3">
+                                        <span class="input-group-text">
+                                            <i class="fas fa-qrcode"></i>
+                                        </span>
+                                        <input type="text" class="form-control" placeholder="INV-00000" name="inventoryNumber">
+                                    </div>
+                                </div>
+                                <div class="input-group mb-3">
+                                    <span class="input-group-text bg-success text-white">
+                                        <i class="fas fa-plus"></i>
+                                    </span>
+                                    <button class="form-control text-secondary" onclick="addInputField();">
+                                        <b>Code hinzufügen</b>
+                                    </button>
+                                </div>
+                                <div class="row">
+                                    <div class="col-12 col-md-6 mb-3 mb-md-0">
+                                    <button class="btn btn-success w-100" data-bs-toggle="modal" data-bs-target="#confirmModal">
+                                        Erstelle QR-Code
+                                    </button>
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                    <button class="btn btn-danger w-100" data-bs-toggle="modal" data-bs-target="#confirmModal">
+                                        Zurücksetzen
+                                    </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <div class="card">
+                                    <h5 class="card-header">
+                                        QR Code - Einstellungen
+                                        <span class="float-end" data-bs-toggle="collapse" href="#collapse-settings">
+                                            <i class="fa fa-chevron-down pull-right"></i>
+                                        </span>
+                                    </h5>
+                                    <div id="collapse-settings" class="collapse show">
+                                        <div class="card-body">
+                                            <div class="input-group mb-3">
+                                                <span class="input-group-text">
+                                                    <i class="fas fa-palette"></i>
+                                                </span>
+                                                <input type="color" class="form-control form-control-color" value="#000000" id="qrCodeColorDark">
+                                                <span class="input-group-text w-50">
+                                                    <b>Farbe</b>
+                                                </span>
+                                            </div>
+                                            <div class="input-group mb-3">
+                                                <span class="input-group-text">
+                                                    <i class="fas fa-expand"></i>
+                                                </span>
+                                                <input type="range" class="form-control form-range form-control-range" id="qrCodeSize" onchange="setqrCodeSize(this.value);">
+                                                <span class="input-group-text w-50">
+                                                    <span id="getqrCodeSize">
+                                                        <b>48px - Größe</b>
+                                                    </span>
+                                                </span>
+                                            </div>
+                                            <div class="input-group">
+                                                <span class="input-group-text">
+                                                    <i class="fas fa-qrcode"></i>
+                                                </span>
+                                                <input type="range" class="form-control form-range form-control-range" value="4" min="1" max="4" id="qrCodeQuality">
+                                                <span class="input-group-text w-50">
+                                                    <b>Qualität</b>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-6 mt-3 mb-3">
+                        <div class="card">
+                            <h5 class="card-header">
+                                Etikette/n
+                                <span class="float-end" onclick="printQRCode();">
+                                    <i class="fas fa-print"></i>
+                                </span>
+                            </h5>
+                            <div class="card-body qr-body" id="labels">
+                                <div id="wait">Warten auf Eingabe...</div>
+                                <div id="qrcode"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal - Confirm -->
+        <div class="modal fade" id="confirmModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Bestätigen</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        Bitte bestätigen Sie Ihre Ausführung!
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-success" onclick="submitQrCode();" data-bs-dismiss="modal">Bestätigen</button>
+                        <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Abbrechen</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- JavaScript - Bootstrap -->
+        <script src="js/bootstrap.bundle.min.js"></script>
+        <!-- JavaScript - QRCode -->
+        <script src="js/qrcode.min.js"></script>
+        <!-- JavaScript -->
+        <script>
+            var size = [];
+            var qrCodeSize = 48;
+            for(var i = 48; i <= 256; i+= 16) {
+                size.push(i);
+            }
+            document.getElementById('qrCodeSize').value = 0;
+            document.getElementById('qrCodeSize').max = size.length - 1;
+
+            function setqrCodeSize(value) {
+                qrCodeSize = size[value];
+                document.getElementById('getqrCodeSize').innerHTML = '<b>' + size[value] + 'px - Größe</b>';
+            }
+
+            function printQRCode() {
+                const printContents = document.getElementById('qrcode').innerHTML;
+                if (printContents != '') {
+                    document.body.innerHTML = printContents;
+                    window.print();
+                    location.reload();
+                }
+            }
+
+            function submitQrCode() {
+                var wait = document.getElementById('wait');
+                var labels = document.getElementById('labels');
+                var qrcodeContainer = document.getElementById("qrcode");
+
+                if (qrcodeContainer != undefined) {
+                    while (qrcodeContainer.firstChild) {
+                        qrcodeContainer.removeChild(qrcodeContainer.lastChild);
+                    }
+                }
+
+                var inventoryInput = document.getElementsByName('inventoryNumber'),
+                QRCode = [].map.call(inventoryInput, function(input) {
+                    if (!input.value)
+                        return;
+                    
+                    if (wait.innerHTML.length != null)
+                        document.getElementById('wait').innerHTML = '';
+                    
+                    createQRCode(input.value);
+                });
+            }
+
+            function createQRCode(val) {
+                /*
+                    QR-Code Settings
+                */
+                var qrCodeColorDark = document.getElementById('qrCodeColorDark').value;
+                var qrCodeQuality = document.getElementById('qrCodeQuality').value;
+
+                if (qrCodeQuality == 1) {
+                    qrCodeQuality = QRCode.CorrectLevel.L;
+                }
+                if (qrCodeQuality == 2) {
+                    qrCodeQuality = QRCode.CorrectLevel.M;
+                }
+                if (qrCodeQuality == 3) {
+                    qrCodeQuality = QRCode.CorrectLevel.Q;
+                }
+                if (qrCodeQuality == 4) {
+                    qrCodeQuality = QRCode.CorrectLevel.H;
+                }
+
+                /*
+                    QR-Code
+                */
+                var Div = document.getElementById("qrcode");
+
+                var create = document.createElement('div');
+                create.className = 'qrCode';
+
+                var qrcode = new QRCode(create, {
+                    text: val,
+                    width: qrCodeSize,
+                    height: qrCodeSize,
+                    colorDark : qrCodeColorDark,
+                    colorLight : '#ffffff',
+                    correctLevel : qrCodeQuality
+                });
+
+                var text = document.createElement('div');
+                text.className = 'qrCodeTxt';
+                text.innerText = val;
+
+                create.appendChild(text);
+                Div.appendChild(create);
+            }
+
+            function addInputField() {
+                let container = document.getElementById('buttonContainer');
+
+                let divContainer = document.createElement('div');
+                divContainer.className = 'input-group mb-3';
+
+                let iconContainer = document.createElement('span');
+                iconContainer.className = 'input-group-text';
+
+                let icon = document.createElement('i');
+                icon.className = 'fas fa-qrcode';
+
+                let button = document.createElement('input');
+                button.setAttribute('type', 'text');
+                button.className = 'form-control';
+                button.name = 'inventoryNumber';
+                button.placeholder = 'INV-00000';
+
+                let deleteContainer = document.createElement('span');
+                deleteContainer.className = 'input-group-text bg-danger text-white trash';
+                deleteContainer.addEventListener('click', deleteInputField);
+
+                let deleteIcon = document.createElement('i');
+                deleteIcon.className = 'fas fa-trash';
+
+                divContainer.appendChild(iconContainer);
+                iconContainer.appendChild(icon);
+                divContainer.appendChild(button);
+
+                button.after(deleteContainer);
+                deleteContainer.appendChild(deleteIcon);
+
+                container.appendChild(divContainer);
+            }
+
+            function deleteInputField() {
+                this.parentNode.remove();
+            }
+        </script>
+    </body>
+</html>
